@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Test</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to the CSS file -->
+</head>
+<body>
+    <h2>Please enter your password</h2>
+    <form id="loginForm">
+        <input type="password" id="password" placeholder="Enter password">
+        <input type="submit" value="Submit">
+    </form>
+    <p id="greeting"></p>
+
+    <script>
+        // Load the config.txt and name.txt, then check the password
+        async function loadConfigAndNameAndCheckPassword() {
+            try {
+                // Fetch the config.txt and name.txt files
+                const [configResponse, nameResponse] = await Promise.all([
+                    fetch('config.txt'),
+                    fetch('name.txt')
+                ]);
+
+                if (!configResponse.ok || !nameResponse.ok) {
+                    throw new Error('Failed to load one or both files');
+                }
+
+                // Read the content of the files
+                const configText = await configResponse.text();
+                const nameText = await nameResponse.text();
+
+                // Parse the config and name files
+                const config = parseConfig(configText);
+                const name = parseName(nameText); // Extract the name from name.txt
+
+                // Get the user input for password
+                const inputPass = document.getElementById('password').value;
+
+                // Check if the password matches
+                if (inputPass === config.PASS) {
+                    document.getElementById('greeting').textContent = `Hello ${name}`;
+                } else {
+                    alert('Incorrect password!');
+                }
+            } catch (error) {
+                console.error('Error loading files:', error);
+                alert('Error loading files. Please try again.');
+            }
+        }
+
+        // Parse the config.txt content (same as before)
+        function parseConfig(text) {
+            const config = {};
+            const lines = text.split('\n');
+            lines.forEach(line => {
+                const [key, value] = line.split(':').map(str => str.trim());
+                if (key && value) {
+                    config[key] = value;
+                }
+            });
+            return config;
+        }
+
+        // Parse the name.txt content (extracts the value after NAME:)
+        function parseName(text) {
+            const lines = text.split('\n');
+            for (let line of lines) {
+                const [key, value] = line.split(':').map(str => str.trim());
+                if (key === 'NAME' && value) {
+                    return value;
+                }
+            }
+            return 'Unknown'; // Default if NAME is not found
+        }
+
+        // Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            loadConfigAndNameAndCheckPassword();
+        });
+    </script>
+</body>
+</html>
